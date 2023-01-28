@@ -1,0 +1,22 @@
+server:
+        hide-version: yes
+        verbosity: 1
+        database: "" # disable database
+        ip-address: {{ ansible_vio0.ipv4[0].address }}
+        ip-address: {{ ansible_vio0.ipv6[1].address }}
+        do-ip4: yes
+        do-ip6: yes
+remote-control:
+        control-enable: yes
+        control-interface: /var/run/nsd.sock
+key:
+        name: "{{ nsd_key_name }}"
+        algorithm: {{ nsd_key_algorithm }}
+        secret: "{{ nsd_key_secret }}"
+zone:
+        name: "{{ nsd_zone_name }}"
+        zonefile: "{{ nsd_zone_file }}"
+        notify: {{ nsd_slave_dns }} {{ nsd_key_name }}
+        provide-xfr: {{ nsd_slave_dns }} {{ nsd_key_name }}
+
+

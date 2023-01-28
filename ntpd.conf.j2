@@ -1,0 +1,11 @@
+# $OpenBSD: ntpd.conf,v 1.15 2019/07/04 05:19:31 deraadt Exp $
+#
+# See ntpd.conf(5) and /etc/examples/ntpd.conf
+
+{% for ip in basesystem_ntp_listen %}
+listen on {{ ip }}
+{% endfor %}
+
+{% for ntp_server in basesystem_ntp_servers %}
+servers {{ ntp_server }}
+{% endfor %}

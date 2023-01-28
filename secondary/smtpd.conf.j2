@@ -1,0 +1,33 @@
+smtp max-message-size 100M
+
+# tables
+table block_people file:/etc/mail/tables/block_people
+table block_spammers file:/etc/mail/tables/block_spammers
+table block_marketing file:/etc/mail/tables/block_marketing
+table ip_whitelist file:/etc/mail/tables/ip_whitelist
+
+# tls certs
+pki "{{ smtpd_tls_pki_name }}" cert "{{ smtpd_tls_cert }}"
+pki "{{ smtpd_tls_pki_name }}" key "{{ smtpd_tls_key }}"
+
+# filters
+filter ip_whitelist phase connect match src <ip_whitelist> bypass
+filter block_people phase mail-from match mail-from <block_people> reject "541 I dont like you"
+filter block_spammers phase mail-from match mail-from <block_spammers> reject "541 BYE"
+filter block_marketing phase mail-from match mail-from <block_marketing> junk
+filter reverse_dns phase connect match !rdns reject "512 fix your mail server, you have no reverse DNS"
+
+# filter chain
+filter my_filter chain {ip_whitelist, block_people, block_spammers, block_marketing, reverse_dns}
+
+# listen on public interface
+listen on vio0 filter my_filter hostname {{ smtpd_listen_hostname }} port 25 tls pki {{ smtpd_tls_pki_name }} 
+
+#actions
+action "2primary" relay backup 
+action "local" expand-only
+
+# match and deliver locally
+match from any for domain mydomain.net action "2primary"
+match from any for domain {{ smtpd_listen_hostname }} action "local"
+

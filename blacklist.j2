@@ -1,0 +1,81 @@
+#!/bin/ksh
+
+#######################
+#####  functions  #####
+#######################
+
+parsev4andappend() {
+/usr/bin/printf "$TMP_LIST" | /usr/bin/grep -E -v "^#|^$|^;" | /usr/bin/awk '{print $1}' | /usr/bin/grep -E -v "^[0-9a-f][0-9a-f][0-9a-f][0-9a-f]" >> /tmp/tmp_blacklist_ipv4
+}
+
+parsev6andappend() {
+/usr/bin/printf "$TMP_LIST" | /usr/bin/grep -E -v "^#|^$|^;" | /usr/bin/awk '{print $1}' | /usr/bin/grep -E "^[0-9a-f][0-9a-f][0-9a-f][0-9a-f]" >> /tmp/tmp_blacklist_ipv6
+}
+
+countips() {
+IPV4_COUNT=$(/usr/bin/grep -E -v "^#|^$|^;" /tmp/tmp_blacklist_ipv4 | /usr/bin/awk '{print $1}' | /usr/bin/grep -E -c -v "^[0-9a-f][0-9a-f][0-9a-f][0-9a-f]") 
+IPV6_COUNT=$(/usr/bin/grep -E -v "^#|^$|^;" /tmp/tmp_blacklist_ipv6 | /usr/bin/awk '{print $1}' | /usr/bin/grep -E -c "^[0-9a-f][0-9a-f][0-9a-f][0-9a-f]")
+/usr/bin/printf "local list now contains $IPV4_COUNT ipv4 addresses/cidr and $IPV6_COUNT ipv6 addresses/cidr.\n\n"
+}
+
+#############################################
+#####  array of public blacklists urls  #####
+#############################################
+
+urls[0]="https://www.myip.ms/files/blacklist/general/latest_blacklist.txt"
+urls[1]="https://rules.emergingthreats.net/blockrules/compromised-ips.txt"
+urls[2]="https://www.binarydefense.com/banlist.txt"
+urls[3]="https://rules.emergingthreats.net/fwrules/emerging-Block-IPs.txt"
+urls[4]="https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/firehol_level1.netset"
+urls[5]="https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/firehol_level2.netset"
+urls[6]="https://www.spamhaus.org/drop/drop.txt"
+urls[7]="https://www.spamhaus.org/drop/edrop.txt"
+urls[8]="https://www.spamhaus.org/drop/dropv6.txt"
+urls[9]="https://feodotracker.abuse.ch/downloads/ipblocklist.txt"
+urls[10]="https://sslbl.abuse.ch/blacklist/sslipblacklist.txt"
+urls[11]="https://lists.blocklist.de/lists/25.txt"
+urls[12]="{{ spamd_custom_blacklist_url }}"
+
+###########################
+#####  actual script  #####
+###########################
+
+# create temporary lists
+/usr/bin/touch /tmp/tmp_blacklist_ipv4 
+/usr/bin/touch /tmp/tmp_blacklist_ipv6 
+
+# get ips from psbl.org and merge to temp list
+
+printf "fetch blacklist and add to temporary blocklist. SOURCE : psbl-mirror.surriel.com::psbl/psbl.txt (rsync)\n"
+/usr/local/bin/rsync -q -z psbl-mirror.surriel.com::psbl/psbl.txt /tmp/tmp_blacklist_psbl.org
+/bin/cat /tmp/tmp_blacklist_psbl.org >> /tmp/tmp_blacklist_ipv4
+/bin/rm -f /tmp/tmp_blacklist_psbl.org
+countips
+
+# loop through public blacklist and append to temporary local blacklist
+
+for url in "${urls[@]}";
+do
+  printf "fetch blacklist and add to temporary blocklist. SOURCE : %s\n" "$url"
+  TMP_LIST=$(/usr/local/bin/curl -s -L $url)
+  parsev4andappend
+  parsev6andappend
+  countips
+done
+
+# add custom ipv4 we don't like
+
+# move temporary lists to the final blacklist
+/bin/mv /tmp/tmp_blacklist_ipv4 /etc/blacklists/black.txt 
+/bin/mv /tmp/tmp_blacklist_ipv6 /etc/blacklists/black6.txt 
+
+# reload packet filter 
+
+if /sbin/pfctl -f /etc/pf.conf;
+then
+  printf "packet filter restarted.\n"
+else
+  printf "packet filter failed to restart.\n"
+  mailx -s "CRITICAL : packet filter failed to restart after spamd list aggregation" user@mydomain.net otheruser@mydomain.net
+fi
+

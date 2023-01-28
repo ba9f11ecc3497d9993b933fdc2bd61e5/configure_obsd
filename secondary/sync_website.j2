@@ -1,0 +1,2 @@
+#!/bin/ksh
+/usr/local/bin/rsync -e "ssh -i /root/.ssh/replication_rsa" -a --delete --rsync-path=/usr/local/bin/rsync {{sync_website_source}} {{sync_website_destination}}

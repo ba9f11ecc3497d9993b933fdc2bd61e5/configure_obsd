@@ -1,0 +1,27 @@
+all:\
+        :nixspam:bsdly:white:black:
+
+nixspam:\
+        :black:\
+        :msg="Your address %A is in the nixspam list\n\
+        See http://www.heise.de/ix/nixspam/dnsbl_en/ for details":\
+        :method=https:\
+        :file=www.openbsd.org/spamd/nixspam.gz
+
+bsdly:\
+    :black:\
+    :msg="SPAM.  Your address %A has sent spam within the last 24 hours.  \n\
+        See http://www.bsdly.net/~peter/traplist.shtml for details.":\
+    :method=https:\
+    :file=www.bsdly.net/~peter/bsdly.net.traplist
+
+white:\
+        :white:\
+        :method=file:\
+        :file=/etc/mail/white.txt:
+
+black:\
+        :black:\
+        :msg="Got your ip from myip.ms blacklist":\
+        :method=file:\
+        :file=/etc/blacklists/black.txt:

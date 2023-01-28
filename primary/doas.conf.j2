@@ -1,0 +1,25 @@
+permit nopass keepenv root 
+permit persist keepenv {{ user_name }}  
+permit nopass keepenv {{ user_name }} as root cmd tail args "-f" "/var/log/maillog" 
+permit nopass keepenv {{ user_name }} as root cmd cat args "/var/log/maillog"
+permit nopass keepenv {{ user_name }} as root cmd block_email.sh
+permit nopass keepenv {{ user_name }} as root cmd /usr/sbin/rcctl args "stop" "smtpd"
+permit nopass keepenv {{ user_name }} as root cmd /usr/sbin/rcctl args "start" "smtpd"
+permit nopass keepenv {{ user_name }} as root cmd /usr/sbin/rcctl args "check" "smtpd"
+{% if user_masterdns == True %}
+permit nopass keepenv {{ user_masterdns_name }} as root cmd /bin/cp args "/home/master_dns/mydomain.signed" "/var/nsd/zones/master/mydomain.net" 
+permit nopass keepenv {{ user_masterdns_name }} as root cmd /usr/sbin/nsd-control args "reload" "mydomain.net" 
+permit nopass keepenv {{ user_masterdns_name }} as root cmd /usr/sbin/nsd-control args "notify" "mydomain.net" 
+{% endif %}
+{% if user_mastercert == True %}
+permit nopass keepenv {{ user_mastercert_name }} as root cmd /bin/cp args "-v" "/home/master_cert/mydomain.net.key" "/etc/ssl/private/mydomain.net.key" 
+permit nopass keepenv {{ user_mastercert_name }} as root cmd /bin/cp args "-v" "/home/master_cert/mydomain.net.crt" "/etc/ssl/mydomain.net.crt"
+permit nopass keepenv {{ user_mastercert_name }} as root cmd /usr/sbin/rcctl args "restart" "relayd" 
+permit nopass keepenv {{ user_mastercert_name }} as root cmd /usr/sbin/rcctl args "check" "relayd" 
+permit nopass keepenv {{ user_mastercert_name }} as root cmd /usr/sbin/rcctl args "stop" "smtpd" 
+permit nopass keepenv {{ user_mastercert_name }} as root cmd /usr/sbin/rcctl args "start" "smtpd" 
+permit nopass keepenv {{ user_mastercert_name }} as root cmd /usr/sbin/rcctl args "check" "smtpd"
+permit nopass keepenv {{ user_mastercert_name }} as root cmd /usr/sbin/rcctl args "stop" "dovecot" 
+permit nopass keepenv {{ user_mastercert_name }} as root cmd /usr/sbin/rcctl args "start" "dovecot" 
+permit nopass keepenv {{ user_mastercert_name }} as root cmd /usr/sbin/rcctl args "check" "dovecot"
+{% endif %}

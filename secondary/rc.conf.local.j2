@@ -1,0 +1,15 @@
+{% if vpn_enable == True %}
+IPSEC=YES
+iked_flags="-6"
+{% endif %}
+{% if squid_enable == True %}
+pkg_scripts=squid
+{% endif %}
+{% if spamd_enable == True %}
+spamd_black=YES
+spamd_flags="-b -4 -l 127.0.0.1 -h {{ smtpd_listen_hostname }} -n 'Microsoft MAIL Service ready at' -S 60 -s 1 -c 50 -B 25 -v"
+spamlogd_flags=""
+{% endif %}
+httpd_flags=
+relayd_flags=
+nsd_flags=

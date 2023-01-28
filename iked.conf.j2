@@ -1,0 +1,11 @@
+
+{% for item in vpn_tunnels %} 
+
+ikev2 "{{ item.name }}" active esp \
+  from {{ ansible_vio0.ipv4[0].address }} to {{ item.remote_net }} \
+  peer {{ item.remote_ip }} \
+  srcid {{ item.srcid }} \
+  dstid {{ item.dstid }} \
+rsa
+
+{% endfor %}

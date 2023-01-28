@@ -1,0 +1,131 @@
+
+#####################
+#####  OPTIONS  #####
+#####################
+
+set skip on { lo0 enc0 }
+
+#re-assemble fragmented packets
+set reassemble yes
+
+#set number of entries in tables
+set limit table-entries 5000000
+
+#max mtu
+match in all scrub (no-df max-mss 1410)
+
+
+####################
+#####  TABLES  #####
+####################
+
+{% if spamd_enable == True %}
+#spamd tables
+table <spamd> persist file "/etc/blacklists/black.txt"
+
+#bad ipv6 collected from myip.ms
+table <badipv6> persist file "/etc/blacklists/black6.txt"
+{% endif %}
+
+#whitelist dynamically
+table <dynamic_whitelist> persist file "/etc/whitelist/dynamic_whitelist"
+table <dynamic_whitelist6> persist file "/etc/whitelist/dynamic_whitelist6"
+
+###################
+#####  RULES  #####
+###################
+
+# Block and log everything else that comes in
+block in log from any to any
+
+{% if spamd_enable == True %}
+# mess with spammers
+pass in log quick on vio0 inet proto tcp from <spamd> to any port 25 divert-to 127.0.0.1 port 8025
+block in log quick on vio0 inet6 proto tcp from <badipv6> to any
+block in log quick on vio0 inet proto tcp from <spamd> to any
+block in log quick on vio0 inet proto udp from <spamd> to any
+{% endif %}
+
+#allow pass out
+pass out log quick on vio0 inet from any to any keep state 
+pass out log quick on vio0 inet6 from any to any keep state
+
+# allow icmp requests, network solicitation and advertisement and router solicitation and advertisement
+pass in log on vio0 inet6 proto icmp6 icmp6-type 133 keep state
+pass in log on vio0 inet6 proto icmp6 icmp6-type 134 keep state
+pass in log on vio0 inet6 proto icmp6 icmp6-type 135 keep state
+pass in log on vio0 inet6 proto icmp6 icmp6-type 136 keep state
+
+#allow ipv4 icmp requests from known machines
+{% for ipv4 in allow_ping_v4_from -%}
+pass in log on vio0 proto icmp from {{ ipv4 }} to any icmp-type 8
+{% endfor %}
+
+#allow ipv6 icmp requests from known machines
+{% for ipv6 in allow_ping_v6_from -%}
+pass in log on vio0 inet6 proto icmp6 from {{ ipv6 }} to any icmp6-type 128 keep state
+{% endfor %}
+
+#allow ssh/ipv4 from known machines
+{% for ipv4 in allow_ssh_v4_from -%}
+pass in log on vio0 inet proto tcp from {{ ipv4 }} to any port 22
+{% endfor %}
+pass in log on vio0 inet proto tcp from <dynamic_whitelist> to any port 22
+
+#allow ssh/ipv6 from known machines
+{% for ipv6 in allow_ssh_v6_from -%}
+pass in log on vio0 inet6 proto tcp from {{ ipv6 }} to any port 22
+{% endfor %}
+pass in log on vio0 inet proto tcp from <dynamic_whitelist6> to any port 22
+
+{% if vpn_enable == True %}
+#allow vpn from known machines
+{% for item in vpn_tunnels -%} 
+pass in log on vio0 proto esp from {{ item.remote_ip }} to vio0
+pass in log on vio0 proto udp from {{ item.remote_ip }} to vio0 port {isakmp, ipsec-nat-t}
+{% endfor %}
+
+# Allow IP-in-IP traffic between the gateways on the enc(4) interface
+pass in on enc0 proto ipencap from any to any keep state (if-bound)
+pass out on enc0 proto ipencap from any to any keep state (if-bound)
+{% endif %}
+
+
+{% if nsd_enable == True %}
+#allow dns public ipv4 and ipv6 (tcp matters)
+pass in log on vio0 inet proto udp from any to any port 53
+pass in log on vio0 inet6 proto udp from any to any port 53
+pass in log on vio0 inet proto tcp from any to any port 53
+pass in log on vio0 inet6 proto tcp from any to any port 53
+{% endif %}
+
+{% if httpd_enable == True %}
+#allow to httpd (will redirect to 443)
+pass in log on vio0 inet proto tcp from any to any port 80
+pass in log on vio0 inet6 proto tcp from any to any port 80
+{% endif %}
+
+{% if relayd_enable == True %}
+#allow to relayd (will redirect to httpd port 8080)
+pass in log on vio0 inet proto tcp from any to any port 443
+pass in log on vio0 inet6 proto tcp from any to any port 443
+{% for ipv4 in relayd_target_servers_v4 -%}
+pass in log on vio0 inet proto tcp from {{ ipv4 }} to vio0 port 8080
+{% endfor %}
+{% for ipv6 in relayd_target_servers_v6 -%}
+pass in log on vio0 inet6 proto tcp from {{ ipv6 }} to vio0 port 8080
+{% endfor %}
+{% endif %}
+
+{% if smtpd_enable == True %}
+#allow smtp
+pass in log on vio0 inet proto tcp from any to any port 25
+pass in log on vio0 inet6 proto tcp from any to any port 25
+{% endif %}
+
+{% if squid_enable == True %}
+#allow access to squid proxy
+{% for ip in squid_allow -%}
+pass in log on vio0 inet proto tcp from {{ ip }} to any port 3128
+{% endfor %}
+{% endif %}

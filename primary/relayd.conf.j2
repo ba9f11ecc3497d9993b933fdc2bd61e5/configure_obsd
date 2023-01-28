@@ -1,0 +1,38 @@
+ipv4='{{ ansible_vio0.ipv4[0].address }}'
+ipv6='{{ ansible_vio0.ipv6[1].address }}'
+
+table <servers> { "{{relayd_target_servers_v4[0]}}" "{{relayd_target_servers_v4[1]}}" }
+table <servers_v6> { "{{relayd_target_servers_v6[0]}}" "{{relayd_target_servers_v6[1]}}" }
+
+http protocol "https" {
+        tls keypair  "{{relayd_tls_keypair_name}}" # is looking in /etc/ssl/private/[name].key and /etc/ssl/[name].cert
+
+        tls ciphers "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256"
+
+        match request header append "X-Forwarded-For" value "$REMOTE_ADDR"
+        match request header append "X-Forwarded-Port" value "$REMOTE_PORT"
+
+        match response header set "Content-Security-Policy" value "default-src {{relayd_content_security_policy_default_src[0]}} {{relayd_content_security_policy_default_src[1]}}; script-src 'self'; require-trusted-types-for 'script'; object-src 'none'; base-uri 'none';style-src 'self' 'unsafe-inline'"
+        match response header set "Feature-Policy" value "camera 'none'; microphone 'none'"
+        match response header set "Referrer-Policy" value "no-referrer"
+        match response header set "Strict-Transport-Security" value "max-age=31536000; includeSubDomains; preload"
+        match response header set "X-Content-Type-Options" value "nosniff"
+        match response header set "X-Frame-Options" value "deny"
+        match response header set "X-XSS-Protection" value "1; mode=block"
+        match response header set "Permissions-Policy" value "fullscreen=();geolocation=();camera=();payment=();accelerometer();ambient-light-sensor();autoplay();battery();cross-origin-isolated();display-capture();document-domain(); encrypted-media();execution-while-not-rendered();execution-while-out-of-viewport();gyroscope();magnetometer();microphone();midi();navigation-override();picture-in-picture();publickey-credentials-get();screen-wake-lock();sync-xhr();usb();web-share();xr-spatial-tracking()"
+
+        return error
+        pass
+}
+relay to_httpd {
+        listen on $ipv4 port 443 tls
+        protocol "https"
+        forward to <servers> port 8080 check http "/" code 200
+}
+
+relay to_httpdv6 {
+        listen on $ipv6 port 443 tls
+        protocol "https"
+        forward to <servers_v6> port 8080 check http "/" code 200
+}
+
