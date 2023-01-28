@@ -1,0 +1,53 @@
+---
+
+- name: Create directory /etc/blacklists
+  ansible.builtin.file:
+    path: /etc/blacklists
+    state: directory
+    owner: root
+    group: wheel
+    mode: 0755
+  when: spamd_enable == True
+
+- name: add the script block_email.sh
+  ansible.builtin.template:
+    src: templates/block_email.sh.j2
+    dest: /usr/local/bin/block_email.sh
+    owner: root
+    group: wheel
+    mode: 0750
+  when: spamd_enable == True
+    
+- name: add the script to blacklist ips 
+  ansible.builtin.template:
+    src: templates/blacklist.j2
+    dest: /usr/local/bin/blacklist
+    owner: root
+    group: wheel
+    mode: 0750
+  when: spamd_enable == True
+
+- name: Create blacklist file for ipv4
+  ansible.builtin.file:
+    state: touch
+    path: /etc/blacklists/black.txt
+    owner: root
+    group: wheel
+    mode: 0644
+  when: spamd_enable == True
+
+- name: Create blacklist file for ipv6
+  ansible.builtin.file:
+    state: touch
+    path: /etc/blacklists/black6.txt
+    owner: root
+    group: wheel
+    mode: 0644
+  when: spamd_enable == True
+
+- name: restart service spamd
+  ansible.builtin.service:
+    name: spamd
+    state: restarted
+  when: spamd_enable == True
+ 

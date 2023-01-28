@@ -1,0 +1,68 @@
+---
+
+- name: Create directory /etc/mail/tables
+  ansible.builtin.file:
+    path: /etc/mail/tables
+    state: directory
+    mode: 0755
+  when: smtpd_enable == True
+
+- name: generate file /etc/mail/tables/aliases
+  ansible.builtin.template:
+    src: templates/aliases.j2
+    dest: /etc/mail/aliases
+    owner: root
+    group: wheel
+    mode: 0644
+  when: smtpd_enable == True
+
+- name: generate file /etc/mail/tables/ip_whitelist
+  ansible.builtin.file:
+    path: /etc/mail/tables/ip_whitelist
+    state: file
+    owner: root
+    group: wheel
+    mode: 0644
+  when: smtpd_enable == True
+
+- name: generate file /etc/mail/tables/block_people
+  ansible.builtin.file:
+    path: /etc/mail/tables/block_people
+    state: file
+    owner: root
+    group: wheel
+    mode: 0644
+  when: smtpd_enable == True
+
+- name: generate file /etc/mail/tables/block_spammers
+  ansible.builtin.file:
+    path: /etc/mail/tables/block_spammers
+    state: file
+    owner: root
+    group: secuser
+    mode: 0664
+  when: smtpd_enable == True
+
+- name: generate file /etc/mail/tables/block_marketing
+  ansible.builtin.file:
+    path: /etc/mail/tables/block_marketing
+    state: file
+    owner: root
+    group: wheel
+    mode: 0644
+  when: smtpd_enable == True
+
+- name: generate file /etc/mail/smtpd.conf
+  ansible.builtin.template:
+    src: templates/secondary/smtpd.conf.j2
+    dest: /etc/mail/smtpd.conf
+    owner: root
+    group: wheel
+    mode: 0644
+  when: smtpd_enable == True
+
+- name: enable smtpd service 
+  ansible.builtin.service:
+    enabled: True 
+    name: smtpd
+    state: started

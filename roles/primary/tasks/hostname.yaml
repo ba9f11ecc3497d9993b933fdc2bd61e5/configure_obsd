@@ -1,0 +1,13 @@
+---
+
+- name: set "{{ basesystem_hostname }}" in file /etc/myname
+  copy:
+    content: "{{ basesystem_hostname }}\n"
+    dest: "/etc/myname"
+ 
+- name: add "{{ basesystem_hostname }}" in /etc/hosts
+  template:
+    src: "templates/hosts.j2" 
+    dest: "/etc/hosts" 
+    
+

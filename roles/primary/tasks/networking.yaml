@@ -1,0 +1,29 @@
+---
+
+#- name: disable resolvd
+#  ansible.builtin.service:
+#    name: resolvd
+#    enabled: no
+
+#- name: disable resolvd
+#  ansible.builtin.service:
+#    name: resolvd
+#    state: stopped
+
+#- name: run hostname to apply hostname
+#  ansible.builtin.shell:
+#    cmd: "/bin/hostname {{ basesystem_hostname }}"
+
+#- name: rewrite /etc/hostname.vio0
+#  ansible.builtin.template:
+#    src: "templates/hostname.vio0.j2"
+#    dest: /etc/hostname.vio0
+
+#- name: rewrite /etc/resolv.conf
+#  ansible.builtin.template:
+#    src: "templates/resolv.conf.j2"
+#    dest: /etc/resolv.conf
+ 
+#- name: run command netstart to apply basesystem_hostname
+#  ansible.builtin.shell:
+#    cmd: /bin/sh /etc/netstart

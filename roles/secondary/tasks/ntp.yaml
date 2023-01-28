@@ -1,0 +1,52 @@
+---
+
+- name: create ntpd.conf file
+  ansible.builtin.template:
+    src: templates/ntpd.conf.j2
+    dest: /etc/ntpd.conf
+    owner: root
+    group: wheel
+    mode: 0644
+
+- name: create symlink /etc/localtime symlink that points to {{ basesystem_tz }}
+  ansible.builtin.file:
+    src: "{{ basesystem_tz }}"
+    dest: /etc/localtime
+    owner: root
+    group: wheel
+    state: link
+
+- name: restart ntpd
+  ansible.builtin.service:
+    name: ntpd
+    state: restarted
+
+- name: get number of peers
+  ansible.builtin.shell:
+   cmd: |
+     ntpctl -s status | awk '{print $1}' | cut -d "/" -f 2
+  register: number_of_peers
+
+#- name: wait until all ntp peers become valid 
+#  ansible.builtin.shell:
+#   cmd: |
+#     ntpctl -s status | awk '{print $1}' | cut -d "/" -f 1
+#  register: valid_peers
+#  until: valid_peers.stdout == number_of_peers.stdout
+#  retries: 10
+#  delay: 5
+
+- name: getting ntp peers status
+  ansible.builtin.command: ntpctl -s status
+  register: ntpd_status
+
+- name: check date
+  ansible.builtin.command: date
+  register: current_date
+
+
+- debug:
+    msg: "ntpd status {{ ntpd_status.stdout }}"
+
+- debug:
+    msg: "current date {{ current_date.stdout }}"

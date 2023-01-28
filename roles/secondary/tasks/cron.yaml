@@ -1,0 +1,55 @@
+---
+
+- name: add MAILTO to the root crontab
+  ansible.builtin.cron:
+    user: root
+    name: MAILTO
+    env: yes
+    job: "{{ basesystem_cron_email }}"
+
+- name: add a cron to run syspatch daily via the syspatch script
+  ansible.builtin.cron:
+    name: cron to run syspatch daily
+    user: root
+    minute: "0"
+    hour: "0"
+    job: "/usr/local/bin/syspatch_script"
+
+- name: add a cron to run pkg_add -u daily
+  ansible.builtin.cron:
+    name: cron to run pkg_add -u daily 
+    user: root
+    minute: "0"
+    hour: "1"
+    job: "/usr/sbin/pkg_add -u"
+
+- name: add a cron to fetch blacklists for spamd
+  ansible.builtin.cron:
+    name: add a cron to fetch blacklists for spamd
+    user: root
+    minute: "0"
+    hour: "0"
+    job: "/usr/local/bin/blacklist"
+  when: spamd_enable == True  
+
+- name: add a cron sync website on primary server
+  ansible.builtin.cron:
+    name: add a cron sync website on primary server
+    user: root
+    minute: "*/5"
+    job: "/usr/local/bin/sync_website"
+  when: sync_website == True
+  
+- name: add a cron to run dynamic whitelisting 
+  ansible.builtin.cron:
+    name: cron to run dynamic whitelisting 
+    user: root
+    job: "/usr/local/bin/dynamic_whitelist"
+  
+- name: add a cron to run start tcpdump
+  ansible.builtin.cron:
+    name: cron to start tcpdump at boot 
+    special_time: reboot
+    user: root
+    job: "/usr/sbin/tcpdump -n -ttt -e -l -i pflog0 inbound and action block | logger -p local3.info -t firewall &"
+  when: tail_pflog_with_tcpdump == True

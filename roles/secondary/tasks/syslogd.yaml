@@ -1,0 +1,19 @@
+- name: create file syslog.conf
+  ansible.builtin.template:
+    src: "templates/syslog.conf.j2"
+    dest: /etc/syslog.conf
+    owner: root
+    group: wheel
+    mode: 0644
+  when: syslogd_forward_logs == True
+  
+- name: Enable service syslogd
+  ansible.builtin.service:
+    name: syslogd
+    enabled: yes
+  
+- name: Enable service syslogd
+  ansible.builtin.service:
+    name: syslogd
+    state: restarted
+  when: syslogd_forward_logs == True

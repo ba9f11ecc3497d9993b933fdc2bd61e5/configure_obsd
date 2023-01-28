@@ -1,0 +1,20 @@
+---
+
+- name: run syspatch (check available patches)
+  ansible.builtin.command: syspatch -c
+  register: patches
+
+- name: run syspatch (apply patches if available)
+  ansible.builtin.command: syspatch
+  when: patches.stdout != ""
+
+- name: upgrade packages
+  ansible.builtin.command: pkg_add -u
+
+- name: add a little syspatch script that will only send you an email (via cron) if there is something to syspatch
+  ansible.builtin.template:
+    src: templates/syspatch_script.j2
+    dest: /usr/local/bin/syspatch_script
+    owner: root
+    group: wheel
+    mode: 0700

@@ -1,0 +1,7 @@
+- name: install the old backup removal script
+  ansible.builtin.template:
+    src: templates/primary/compress_webcontent.j2
+    dest: /usr/local/bin/compress_webcontent
+    owner: root
+    group: wheel
+    mode: 0700

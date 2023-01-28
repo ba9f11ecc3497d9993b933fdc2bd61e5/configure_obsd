@@ -1,0 +1,53 @@
+---
+
+- name: Install dovecot
+  ansible.builtin.package:
+    name: dovecot
+    state: present
+  when: dovecot_enable == True
+  
+- name: configure dovecot /etc/dovecot/dovecot.conf
+  ansible.builtin.copy:
+    src: files/primary/dovecot/dovecot.conf
+    dest: /etc/dovecot/dovecot.conf
+    owner: root
+    group: wheel
+    mode: 0644
+  when: dovecot_enable == True
+  
+- name: configure dovecot /etc/dovecot/conf.d/10-auth.conf
+  ansible.builtin.copy:
+    src: files/primary/dovecot/10-auth.conf
+    dest: /etc/dovecot/conf.d/10-auth.conf
+    owner: root
+    group: wheel
+    mode: 0644
+  when: dovecot_enable == True
+
+- name: configure dovecot /etc/dovecot/conf.d/10-ssl.conf
+  ansible.builtin.copy:
+    src: files/primary/dovecot/10-ssl.conf
+    dest: /etc/dovecot/conf.d/10-ssl.conf
+    owner: root
+    group: wheel
+    mode: 0644
+  when: dovecot_enable == True
+
+- name: configure dovecot /etc/dovecot/conf.d/10-mail.conf
+  ansible.builtin.copy:
+    src: files/primary/dovecot/10-mail.conf
+    dest: /etc/dovecot/conf.d/10-mail.conf
+    owner: root
+    group: wheel
+    mode: 0644
+  when: dovecot_enable == True
+  
+  
+- name: configure dovecot /etc/dovecot/conf.d/auth-passwdfile.conf.ext
+  ansible.builtin.copy:
+    src: files/primary/dovecot/auth-passwdfile.conf.ext
+    dest: /etc/dovecot/conf.d/auth-passwdfile.conf.ext
+    owner: root
+    group: wheel
+    mode: 0644
+  when: dovecot_enable == True

@@ -1,0 +1,165 @@
+---
+
+- name: Install packages
+  ansible.builtin.package:
+    name: opensmtpd-extras
+    state: present
+  when: smtpd_enable == True
+
+- name: Create directory /etc/mail/tables
+  ansible.builtin.file:
+    path: /etc/mail/tables
+    state: directory
+    mode: 0755
+  when: smtpd_enable == True
+
+- name: generate file /etc/mail/tables/aliases
+  ansible.builtin.template:
+    src: templates/aliases.j2
+    dest: /etc/mail/aliases
+    owner: root
+    group: wheel
+    mode: 0644
+  when: smtpd_enable == True
+
+- name: generate file /etc/mail/tables/ip_whitelist
+  ansible.builtin.file:
+    path: /etc/mail/tables/ip_whitelist
+    state: touch
+    owner: root
+    group: wheel
+    mode: 0644
+  when: smtpd_enable == True
+
+- name: generate file /etc/mail/tables/dynamic_whitelist
+  ansible.builtin.file:
+    path: /etc/mail/tables/dynamic_whitelist
+    state: touch
+    owner: root
+    group: wheel
+    mode: 0644
+  when: smtpd_enable == True
+
+- name: generate file /etc/mail/tables/dynamic_whitelist6
+  ansible.builtin.file:
+    path: /etc/mail/tables/dynamic_whitelist6
+    state: touch
+    owner: root
+    group: wheel
+    mode: 0644
+  when: smtpd_enable == True
+
+- name: generate file /etc/mail/tables/block_people
+  ansible.builtin.file:
+    path: /etc/mail/tables/block_people
+    state: file
+    owner: root
+    group: wheel
+    mode: 0644
+  when: smtpd_enable == True
+
+- name: generate file /etc/mail/tables/block_spammers
+  ansible.builtin.file:
+    path: /etc/mail/tables/block_spammers
+    state: file
+    owner: root
+    group: secuser
+    mode: 0664
+  when: smtpd_enable == True
+
+- name: generate file /etc/mail/tables/block_marketing
+  ansible.builtin.file:
+    path: /etc/mail/tables/block_marketing
+    state: file
+    owner: root
+    group: wheel
+    mode: 0644
+  when: smtpd_enable == True
+
+- name: generate file /etc/mail/tables/passwd
+  ansible.builtin.copy:
+    src: files/primary/smtpd/passwd
+    dest: /etc/mail/tables/passwd
+    owner: _smtpd
+    group: _dovecot
+    mode: 0640
+  when: smtpd_enable == True
+
+- name: Install packages
+  ansible.builtin.package:
+    name: opensmtpd-filter-dkimsign-0.5
+    state: present
+  when: smtpd_enable == True
+
+  
+- name: generate file /etc/mail/dkim/private.key
+  ansible.builtin.copy:
+    src: files/primary/smtpd/dkim_private.key
+    dest: /etc/mail/dkim/private.key
+    owner: _dkimsign
+    group: _dkimsign
+    mode: 0600
+  when: smtpd_enable == True
+
+
+- name: create vmail group
+  ansible.builtin.group:
+    name: vmail
+    gid: 2000
+  when: smtpd_enable == True
+
+
+- name: create vmail user
+  ansible.builtin.user:
+    name: vmail
+    create_home: no
+    group: vmail
+    uid: 2000
+    home: /var/vmail
+    shell: /sbin/nologin
+  when: smtpd_enable == True
+    
+
+- name: create /var/vmail folder
+  ansible.builtin.file:
+    state: directory
+    owner: vmail
+    group: vmail
+    mode: 0770
+    path: /var/vmail
+  when: smtpd_enable == True
+  
+#- name: create /var/vmail/{{ smtpd_listen_hostname }} folder
+#  ansible.builtin.file:
+#    state: directory
+#    owner: vmail
+#    group: vmail
+#    mode: 0770
+#    path: /var/vmail/{{ smtpd_listen_hostname }}
+#  when: smtpd_enable == True
+
+
+- name: create virtuals file
+  ansible.builtin.copy:
+    src: files/primary/smtpd/virtuals
+    dest: /etc/mail/tables/virtuals
+    owner: _smtpd
+    group: _smtpd
+  when: smtpd_enable == True    
+
+
+- name: generate file /etc/mail/smtpd.conf
+  ansible.builtin.template:
+    src: templates/primary/smtpd.conf.j2
+    dest: /etc/mail/smtpd.conf
+    owner: root
+    group: wheel
+    mode: 0644
+  when: smtpd_enable == True
+
+
+- name: restart smtpd service 
+  ansible.builtin.service:
+    enabled: True 
+    name: smtpd
+    state: restarted

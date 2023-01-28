@@ -1,0 +1,71 @@
+---
+
+- name: Ensure group "{{ sync_website_content_user }}" exists
+  ansible.builtin.group:
+    name: "{{ sync_website_content_user }}"
+    state: present
+    gid: 1018
+  when: sync_website == True
+
+- name: Ensure user "{{ sync_website_content_user }}" exists 
+  user:
+    name: "{{ sync_website_content_user }}"
+    shell: /bin/ksh
+    group: "{{ sync_website_content_user }}"
+    uid: 1018
+  when: sync_website == True
+  
+- name: create ~/.ssh dir for user "{{ sync_website_content_user }}"
+  ansible.builtin.file:
+    path: "{{ '/home/' + sync_website_content_user + '/.ssh' }}"
+    state: directory
+    owner: "{{ sync_website_content_user }}"
+    group: "{{ sync_website_content_user }}"
+    mode: 0700
+  when: sync_website == True
+  
+- name: add authorized_keys for user "{{ sync_website_content_user }}"
+  template:
+    src: templates/primary/webcontent_authorized_keys.j2
+    dest: "{{ '/home/' + sync_website_content_user + '/.ssh/authorized_keys' }}"
+    owner: "{{ sync_website_content_user }}"
+    group: "{{ sync_website_content_user }}"
+    mode: 0600
+  when: sync_website == True
+  
+- name: chown the content of /var/www/htdocs/* to webcontent
+  ansible.builtin.shell: chown -R webcontent:webcontent /var/www/htdocs/*
+
+- name: Ensure group "{{ user_replication_name }}" exists
+  ansible.builtin.group:
+    name: "{{ user_replication_name }}"
+    state: present
+    gid: 1015
+  when: sync_website == True
+
+- name: Ensure user "{{ user_replication_name }}" exists 
+  user:
+    name: "{{ user_replication_name }}"
+    shell: /bin/ksh
+    group: "{{ user_replication_name }}"
+    uid: 1015
+  when: sync_website == True
+  
+- name: create ~/.ssh dir for user "{{ user_replication_name }}"
+  ansible.builtin.file:
+    path: "{{ '/home/' + user_replication_name + '/.ssh' }}"
+    state: directory
+    owner: "{{ user_replication_name }}"
+    group: "{{ user_replication_name }}"
+    mode: 0700
+  when: sync_website == True
+  
+- name: add authorized_keys for user "{{ user_replication_name }}"
+  template:
+    src: templates/primary/replication_authorized_keys.j2
+    dest: "{{ '/home/' + user_replication_name + '/.ssh/authorized_keys' }}"
+    owner: "{{ user_replication_name }}"
+    group: "{{ user_replication_name }}"
+    mode: 0600
+  when: sync_website == True
+

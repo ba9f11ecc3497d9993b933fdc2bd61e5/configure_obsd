@@ -1,0 +1,66 @@
+---
+
+- name: Enable service iked
+  ansible.builtin.service:
+    name: iked
+    enabled: yes
+  when: vpn_enable == True
+
+- name: copy ca cert
+  ansible.builtin.copy:
+    src: "files/secondary/iked/{{ vpn_cacert }}"
+    dest: "/etc/iked/ca/{{ vpn_cacert }}"
+    owner: root
+    group: wheel
+    mode: 0644
+  when: vpn_enable == True
+
+- name: copy {{ basesystem_hostname }} key
+  ansible.builtin.copy:
+    src: "files/secondary/iked/{{ vpn_mykey }}"
+    dest: "/etc/iked/private/local.key"
+    owner: root
+    group: wheel
+    mode: 0600
+  when: vpn_enable == True
+
+- name: copy {{ basesystem_hostname }} cert
+  ansible.builtin.copy:
+    src: "files/secondary/iked/{{ vpn_mycert }}"
+    dest: "/etc/iked/certs/{{ vpn_mycert }}"
+    owner: root
+    group: wheel
+    mode: 0644
+  when: vpn_enable == True
+
+- name: copy remote systems pubkey
+  ansible.builtin.copy:
+    src: "files/secondary/iked/{{ item }}"
+    dest: "/etc/iked/pubkeys/fqdn/{{ item }}"
+    owner: root
+    group: wheel
+    mode: 0644
+  when: vpn_enable == True
+  with_items: "{{ vpn_pubkeys }}"
+
+- name: create file iked.conf
+  ansible.builtin.template:
+    src: "templates/iked.conf.j2"
+    dest: /etc/iked.conf
+    owner: root
+    group: wheel
+    mode: 0600
+  when: vpn_enable == True
+  with_items: "{{ vpn_tunnels }}"
+
+#- name: Restart service iked
+#  ansible.builtin.service:
+#    name: iked
+#    state: stopped
+#  when: vpn_enable == True
+  
+#- name: restart service iked
+#  ansible.builtin.service:
+#    cmd: rcctl restart iked
+#  when: vpn_enable == True
+  

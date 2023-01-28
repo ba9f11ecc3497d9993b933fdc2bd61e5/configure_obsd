@@ -1,0 +1,22 @@
+---
+
+- name: add the nsd.conf to /var/nsd/etc/
+  ansible.builtin.template:
+    src: templates/secondary/nsd.conf.j2
+    dest: /var/nsd/etc/nsd.conf
+    owner: root
+    group: _nsd
+    mode: 0640
+  when: nsd_enable == True
+  
+- name: Enable service nsd
+  ansible.builtin.service:
+    name: nsd
+    enabled: yes
+  when: nsd_enable == True
+  
+- name: Start service nsd
+  ansible.builtin.service:
+    name: nsd
+    state: restarted
+  when: nsd_enable == True

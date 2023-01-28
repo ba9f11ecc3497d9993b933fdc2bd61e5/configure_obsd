@@ -1,0 +1,83 @@
+---
+
+- name: install gnupg
+  ansible.builtin.package:
+    name: gnupg
+    state: present
+  when: backup_enabled == True
+  
+- name: Install gtar
+  ansible.builtin.package:
+    name: gtar-1.34
+    state: present
+  when: backup_enabled == True
+
+- name: copy gpg private key
+  ansible.builtin.copy:
+    src: files/primary/backup/cloudbase.sec
+    dest: /root/cloudbase.sec
+    owner: root
+    group: wheel
+    mode: 0400
+  when: backup_enabled == True
+  
+- name: copy gpg private key
+  ansible.builtin.copy:
+    src: files/primary/backup/id_rsa
+    dest: /root/.ssh/id_rsa
+    owner: root
+    group: wheel
+    mode: 0400
+  when: backup_enabled == True
+  
+- debug:
+    msg: "manually run : gpg --import /root/cloudbase.sec if this is the first ansible run on this server"
+  when: backup_enabled == True    
+
+- debug:
+    msg: "manually run : gpg --list-keys if this is the first ansible run on this server"
+  when: backup_enabled == True
+    
+- debug:
+    msg: "manually run : gpg --edit-key {KEY} trust quit if this is the first ansible run on this server"
+  when: backup_enabled == True
+    
+- name: Pause to allow the comoletion of above steps, if this is not the first run, you may continue
+  pause:
+    minutes: 15
+  when: backup_enabled == True
+    
+- name: delete gpg private key
+  ansible.builtin.file:
+    path: /root/cloudbase.sec
+    state: absent
+  when: backup_enabled == True
+  
+  
+- name: install the backup script
+  ansible.builtin.template:
+    src: templates/primary/backup_script.j2
+    dest: /usr/local/bin/backup
+    owner: root
+    group: wheel
+    mode: 0700
+  when: backup_enabled == True
+
+- name: install the old backup removal script
+  ansible.builtin.template:
+    src: templates/primary/remove_old_backups.j2
+    dest: /usr/local/bin/remove_old_backups
+    owner: root
+    group: wheel
+    mode: 0700
+  when: backup_enabled == True
+  
+  
+- name: create the backup folder
+  ansible.builtin.file:
+    state: directory
+    path: /backup
+    owner: root
+    group: wheel
+    mode: 0700
+  when: backup_enabled == True

@@ -1,0 +1,10 @@
+---
+
+- name: increase login.conf max open files for dovecot
+  ansible.builtin.template:
+    src: templates/primary/login.conf.j2
+    dest: /etc/login.conf
+    owner: root
+    group: wheel
+    mode: 0644
+  when: dovecot_enable == True

@@ -1,0 +1,9 @@
+---
+
+- name: create file sysctl.conf
+  ansible.builtin.template:
+    src: "templates/secondary/sysctl.conf.j2"
+    dest: /etc/sysctl.conf
+    owner: root
+    group: wheel
+    mode: 0644

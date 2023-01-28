@@ -1,0 +1,8 @@
+- name: insert {{ basesystem_pkgpath }} in /etc/installurl
+  ansible.builtin.copy: 
+    dest: /etc/installurl
+    owner: root
+    group: wheel
+    mode: 0644
+    content: |
+       {{ basesystem_pkgpath }}

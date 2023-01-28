@@ -1,0 +1,23 @@
+---
+ 
+- name: add the relayd.conf to /etc/
+  ansible.builtin.template:
+    src: templates/secondary/relayd.conf.j2
+    dest: /etc/relayd.conf
+    owner: root
+    group: wheel
+    mode: 0600
+  when: relayd_enable == True
+  
+- name: Enable service relayd
+  ansible.builtin.service:
+    name: relayd
+    enabled: yes
+  when: relayd_enable == True
+  
+- name: Start service relayd
+  ansible.builtin.service:
+    name: relayd
+    state: started
+  when: relayd_enable == True
+  

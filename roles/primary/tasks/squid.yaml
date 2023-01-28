@@ -1,0 +1,28 @@
+---
+
+- name: Install squid
+  ansible.builtin.package:
+    name: squid-5.7 
+    state: present
+  when: squid_enable == True
+
+- name: add the squid.conf to /etc/squid/
+  ansible.builtin.template:
+    src: templates/squid.conf.j2
+    dest: /etc/squid/squid.conf
+    owner: root
+    group: wheel
+    mode: 0644
+  when: squid_enable == True
+
+- name: Enable service squid
+  ansible.builtin.service:
+    name: squid
+    enabled: yes
+  when: squid_enable == True
+  
+- name: Enable service squid
+  ansible.builtin.service:
+    name: squid
+    state: started
+  when: squid_enable == True

@@ -1,0 +1,15 @@
+
+- name: configure pf.conf
+  ansible.builtin.template:
+    src: templates/primary/pf.conf.j2
+    dest: /etc/pf.conf
+    owner: root
+    group: wheel
+    mode: 0600
+
+- name: pfctl -f /etc/pf.conf 
+  ansible.builtin.command: pfctl -f /etc/pf.conf
+  register: pfctl_result
+
+- debug:
+    msg: "pfctl -f /etc/pf.conf return code {{ pfctl_result.rc }}" 

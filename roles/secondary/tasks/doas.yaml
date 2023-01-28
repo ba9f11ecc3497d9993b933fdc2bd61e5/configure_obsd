@@ -1,0 +1,6 @@
+---
+
+- name: add user "{{ user_name }}" in /etc/doas.conf
+  template:
+    src: "templates/secondary/doas.conf.j2" 
+    dest: "/etc/doas.conf" 

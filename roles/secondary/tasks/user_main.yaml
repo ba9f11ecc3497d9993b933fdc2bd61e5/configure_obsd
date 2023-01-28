@@ -1,0 +1,27 @@
+- name: Ensure group "{{ user_name }}" exists
+  ansible.builtin.group:
+    name: "{{ user_name }}"
+    state: present
+
+- name: Ensure user "{{ user_name }}" exists 
+  user:
+    name: "{{ user_name }}"
+    password: "{{ user_passwd }}"
+    shell: /bin/ksh
+    group: "{{ user_name }}"
+
+- name: create ~/.ssh dir for user "{{ user_name }}"
+  ansible.builtin.file:
+    path: "{{ '/home/' + user_name + '/.ssh' }}"
+    state: directory
+    owner: "{{ user_name }}"
+    group: "{{ user_name }}"
+    mode: 0700
+
+- name: add authorized_keys for user "{{ user_name }}"
+  template:
+    src: templates/authorized_keys.j2
+    dest: "{{ '/home/' + user_name + '/.ssh/authorized_keys' }}"
+    owner: "{{ user_name }}"
+    group: "{{ user_name }}"
+    mode: 0600

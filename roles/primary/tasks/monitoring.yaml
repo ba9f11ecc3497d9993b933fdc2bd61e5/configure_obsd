@@ -1,0 +1,36 @@
+---
+
+- name: Ensure group "{{ monitoring_user }}" exists
+  ansible.builtin.group:
+    name: "{{ monitoring_user }}"
+    state: present
+
+- name: Ensure user "{{ monitoring_user }}" exists 
+  user:
+    name: "{{ monitoring_user }}"
+    shell: /bin/ksh
+    group: "{{ monitoring_user }}"
+
+- name: create ~/.ssh dir for user "{{ monitoring_user }}"
+  ansible.builtin.file:
+    path: "{{ '/home/' + monitoring_user + '/.ssh' }}"
+    state: directory
+    owner: "{{ monitoring_user }}"
+    group: "{{ monitoring_user }}"
+    mode: 0700
+
+- name: add authorized_keys for user "{{ monitoring_user }}"
+  template:
+    src: templates/monitoring_authorized_keys.j2
+    dest: "{{ '/home/' + monitoring_user + '/.ssh/authorized_keys' }}"
+    owner: "{{ monitoring_user }}"
+    group: "{{ monitoring_user }}"
+    mode: 0600
+
+- name: add monitoring script
+  template:
+    src: templates/primary/monitor.j2
+    dest: /usr/local/bin/monitor
+    owner: "{{ monitoring_user }}"
+    group: wheel
+    mode: 0500

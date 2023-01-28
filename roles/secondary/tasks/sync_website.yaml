@@ -1,0 +1,34 @@
+---
+
+- name: Ensure group "{{ sync_website_content_user }}" exists
+  ansible.builtin.group:
+    name: "{{ sync_website_content_user }}"
+    state: present
+    gid: 1018
+  when: sync_website == True
+
+- name: Ensure user "{{ sync_website_content_user }}" exists 
+  user:
+    name: "{{ sync_website_content_user }}"
+    shell: /bin/ksh
+    group: "{{ sync_website_content_user }}"
+    uid: 1018
+  when: sync_website == True
+  
+- name : add replication ssh key
+  ansible.builtin.copy:
+    src: files/secondary/sync_website/replication_rsa
+    dest: /root/.ssh/replication_rsa
+    owner: root
+    group: wheel
+    mode: 0600
+  when: sync_website == True
+
+- name: add a script to sync the content of website from master
+  ansible.builtin.template:
+    src: templates/secondary/sync_website.j2
+    dest: /usr/local/bin/sync_website
+    owner: root
+    group: wheel
+    mode: 0700
+  when: sync_website == True    

@@ -1,0 +1,33 @@
+---
+
+- name: add create folder for dynamic whitelist file
+  ansible.builtin.file:
+    state: directory
+    dest: /etc/whitelist
+    owner: root
+    group: wheel
+    mode: 0700
+
+- name: add create ipv4 dynamic whitelist file
+  ansible.builtin.file:
+    state: touch
+    dest: /etc/whitelist/dynamic_whitelist
+    owner: root
+    group: wheel
+    mode: 0700
+    
+- name: add create ipv6 dynamic whitelist file
+  ansible.builtin.file:
+    state: touch
+    dest: /etc/whitelist/dynamic_whitelist6
+    owner: root
+    group: wheel
+    mode: 0700
+
+- name: add dynamic_whitelist to /usr/local/bin
+  ansible.builtin.template:
+    src: templates/dynamic_whitelist.j2
+    dest: /usr/local/bin/dynamic_whitelist
+    owner: root
+    group: wheel
+    mode: 0700
